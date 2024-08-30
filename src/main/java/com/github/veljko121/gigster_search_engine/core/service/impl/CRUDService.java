@@ -53,6 +53,10 @@ public abstract class CRUDService<T, TRequestDTO, TResponseDTO, TUpdateRequestDT
         repository.deleteById(id);
     }
 
+    public void deleteAll() {
+        repository.deleteAll();
+    }
+
     public TResponseDTO update(ID id, TUpdateRequestDTO updatedEntityRequestDTO) {
         return mapToResponseDTO(updateDomain(id, updatedEntityRequestDTO));
     }

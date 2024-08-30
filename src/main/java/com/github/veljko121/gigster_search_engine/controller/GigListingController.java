@@ -2,6 +2,7 @@ package com.github.veljko121.gigster_search_engine.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/listings/gigs")
 @RequiredArgsConstructor
+@CrossOrigin
 public class GigListingController {
 
     private final IGigListingService gigListingService;
@@ -43,6 +45,12 @@ public class GigListingController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable Integer id) {
         gigListingService.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+    
+    @DeleteMapping
+    public ResponseEntity<?> deleteAll() {
+        gigListingService.deleteAll();
         return ResponseEntity.ok().build();
     }
 
