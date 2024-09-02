@@ -2,6 +2,9 @@ package com.github.veljko121.gigster_search_engine.model;
 
 import java.util.Collection;
 
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+
 import com.github.veljko121.gigster_search_engine.core.service.model.GenericEntity;
 import com.github.veljko121.gigster_search_engine.enums.BandType;
 
@@ -19,11 +22,13 @@ public class Band extends GenericEntity {
     private String description;
 
     @NotNull
+    @Field(type = FieldType.Keyword)
     private BandType type;
 
     @NotNull
     private RegisteredUser owner;
 
-    private Collection<String> genres;
+    @Field(type = FieldType.Keyword)
+    private Collection<@NotBlank String> genres;
 
 }

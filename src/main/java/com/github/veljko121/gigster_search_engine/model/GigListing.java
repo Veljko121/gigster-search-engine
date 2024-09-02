@@ -2,6 +2,7 @@ package com.github.veljko121.gigster_search_engine.model;
 
 import org.springframework.data.elasticsearch.annotations.Document;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
@@ -13,6 +14,9 @@ public class GigListing extends Listing {
 
     @NotNull
     private Band band;
+
+    @NotBlank
+    private String fullTitle;
 
     @PositiveOrZero @NotNull
     private Double startingPrice;

@@ -1,5 +1,8 @@
 package com.github.veljko121.gigster_search_engine.controller;
 
+import java.util.Collection;
+
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -10,11 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.veljko121.gigster_search_engine.dto.GigListingRequestDTO;
 import com.github.veljko121.gigster_search_engine.dto.GigListingResponseDTO;
+import com.github.veljko121.gigster_search_engine.dto.GigListingSearchRequestDTO;
 import com.github.veljko121.gigster_search_engine.dto.GigListingUpdateRequestDTO;
+import com.github.veljko121.gigster_search_engine.model.GigListing;
 import com.github.veljko121.gigster_search_engine.service.IGigListingService;
 
 import lombok.RequiredArgsConstructor;
@@ -57,6 +63,26 @@ public class GigListingController {
     @PutMapping("/{id}")
     public ResponseEntity<GigListingResponseDTO> update(@PathVariable Integer id, @RequestBody GigListingUpdateRequestDTO updatedEntityRequestDTO) {
         return new ResponseEntity<>(gigListingService.update(id, updatedEntityRequestDTO), HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<PagedModel<GigListing>> search(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String bandType,
+            @RequestParam(required = false) Collection<String> genres,
+            @RequestParam(required = false) Double minStartingPrice,
+            @RequestParam(required = false) Double maxStartingPrice,
+            @RequestParam(required = false) Double minPricePerAdditionalHour,
+            @RequestParam(required = false) Double maxPricePerAdditionalHour,
+            @RequestParam(required = false) Integer minDurationHours,
+            @RequestParam(required = false) Integer maxDurationHours,
+            @RequestParam(required = false) Integer minMaxHours,
+            @RequestParam(required = false) Integer maxMaxHours
+    ) {
+        GigListingSearchRequestDTO requestDTO = new GigListingSearchRequestDTO(page, pageSize,query, bandType, genres, minStartingPrice, maxStartingPrice, minPricePerAdditionalHour, maxPricePerAdditionalHour,minDurationHours, maxDurationHours, minMaxHours, maxMaxHours);
+        return ResponseEntity.ok(gigListingService.searchGigListings(requestDTO));
     }
     
 }
