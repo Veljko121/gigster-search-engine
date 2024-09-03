@@ -7,6 +7,8 @@ import com.github.veljko121.gigster_search_engine.model.GigListing;
 
 public interface IGigListingSearchService {
 
-    PagedModel<GigListing> searchGigListings(GigListingSearchRequestDTO requestDTO);
-    
+    PagedModel<GigListing> searchGigListingsPaged(GigListingSearchRequestDTO requestDTO);
+
+    PagedModel<Integer> searchGigListingIdsPaged(GigListingSearchRequestDTO requestDTO);
+
 }

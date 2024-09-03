@@ -78,5 +78,19 @@ public class GigListingController {
         GigListingSearchRequestDTO requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandType, genres, maximumPrice, durationHours);
         return ResponseEntity.ok(gigListingService.searchGigListings(requestDTO));
     }
+
+    @GetMapping("/search/ids")
+    public ResponseEntity<PagedModel<Integer>> searchIds(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String bandType,
+            @RequestParam(required = false) Collection<String> genres,
+            @RequestParam(required = false) Double maximumPrice,
+            @RequestParam(required = false) Double durationHours
+    ) {
+        GigListingSearchRequestDTO requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandType, genres, maximumPrice, durationHours);
+        return ResponseEntity.ok(gigListingService.searchGigListingIds(requestDTO));
+    }
     
 }

@@ -13,4 +13,6 @@ public interface IGigListingService extends ICRUDService<GigListing, GigListingR
 
     PagedModel<GigListing> searchGigListings(GigListingSearchRequestDTO requestDTO);
 
+    PagedModel<Integer> searchGigListingIds(GigListingSearchRequestDTO requestDTO);
+
 }

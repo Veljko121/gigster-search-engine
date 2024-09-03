@@ -57,7 +57,12 @@ public class GigListingService extends CRUDService<GigListing, GigListingRequest
 
     @Override
     public PagedModel<GigListing> searchGigListings(GigListingSearchRequestDTO requestDTO) {
-        return gigListingSearchService.searchGigListings(requestDTO);
+        return gigListingSearchService.searchGigListingsPaged(requestDTO);
+    }
+
+    @Override
+    public PagedModel<Integer> searchGigListingIds(GigListingSearchRequestDTO requestDTO) {
+        return gigListingSearchService.searchGigListingIdsPaged(requestDTO);
     }
     
 }
