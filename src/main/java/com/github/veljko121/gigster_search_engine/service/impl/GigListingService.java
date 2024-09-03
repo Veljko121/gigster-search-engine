@@ -49,7 +49,7 @@ public class GigListingService extends CRUDService<GigListing, GigListingRequest
         entity.setDurationDays(updatedEntityRequestDTO.getDurationDays());
         entity.setBand(updatedEntityRequestDTO.getBand());
         entity.setMinimumDurationHours(updatedEntityRequestDTO.getMinimumDurationHours());
-        entity.setMaximumDurationHours(updatedEntityRequestDTO.getMaximumDurationHours());
+        entity.setMaximumAdditionalHours(updatedEntityRequestDTO.getMaximumAdditionalHours());
         entity.setStartingPrice(updatedEntityRequestDTO.getStartingPrice());
         entity.setPricePerAdditionalHour(updatedEntityRequestDTO.getPricePerAdditionalHour());
         return entity;

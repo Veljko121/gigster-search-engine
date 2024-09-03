@@ -72,16 +72,10 @@ public class GigListingController {
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String bandType,
             @RequestParam(required = false) Collection<String> genres,
-            @RequestParam(required = false) Double minStartingPrice,
-            @RequestParam(required = false) Double maxStartingPrice,
-            @RequestParam(required = false) Double minPricePerAdditionalHour,
-            @RequestParam(required = false) Double maxPricePerAdditionalHour,
-            @RequestParam(required = false) Integer minDurationHours,
-            @RequestParam(required = false) Integer maxDurationHours,
-            @RequestParam(required = false) Integer minMaxHours,
-            @RequestParam(required = false) Integer maxMaxHours
+            @RequestParam(required = false) Double maximumPrice,
+            @RequestParam(required = false) Double durationHours
     ) {
-        GigListingSearchRequestDTO requestDTO = new GigListingSearchRequestDTO(page, pageSize,query, bandType, genres, minStartingPrice, maxStartingPrice, minPricePerAdditionalHour, maxPricePerAdditionalHour,minDurationHours, maxDurationHours, minMaxHours, maxMaxHours);
+        GigListingSearchRequestDTO requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandType, genres, maximumPrice, durationHours);
         return ResponseEntity.ok(gigListingService.searchGigListings(requestDTO));
     }
     

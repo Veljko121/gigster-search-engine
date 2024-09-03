@@ -5,12 +5,17 @@ import lombok.Data;
 
 import java.util.Collection;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
 @Data
 @AllArgsConstructor
 public class GigListingSearchRequestDTO {
 
+    @NotNull @PositiveOrZero
     private Integer page;
-
+    
+    @NotNull @PositiveOrZero
     private Integer pageSize;
 
     private String query;
@@ -19,20 +24,10 @@ public class GigListingSearchRequestDTO {
 
     private Collection<String> genres;
     
-    private Double minStartingPrice;
-
-    private Double maxStartingPrice;
-
-    private Double minPricePerAdditionalHour;
+    @PositiveOrZero
+    private Double maximumPrice;
     
-    private Double maxPricePerAdditionalHour;
+    @PositiveOrZero
+    private Double durationHours;
 
-    private Integer minimumMinimumDurationHours;
-
-    private Integer maximumMinimumDurationHourus;
-
-    private Integer minimumMaximumDurationHours;
-
-    private Integer maximumMaximumDurationHours;
-    
 }

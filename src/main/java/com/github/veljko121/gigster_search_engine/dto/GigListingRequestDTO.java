@@ -27,6 +27,6 @@ public class GigListingRequestDTO extends ListingRequestDTO {
     private Double minimumDurationHours;
 
     @PositiveOrZero @NotNull
-    private Double maximumDurationHours;
+    private Double maximumAdditionalHours;
     
 }
