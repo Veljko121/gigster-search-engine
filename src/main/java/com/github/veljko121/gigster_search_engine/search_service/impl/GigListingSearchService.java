@@ -84,14 +84,18 @@ public class GigListingSearchService implements IGigListingSearchService {
 
     private void addSearchTermQuery(BoolQuery.Builder boolQuery, String searchTerms) {
         if (searchTerms != null) {
-            boolQuery.must(QueryBuilders.multiMatch().query(searchTerms)
-                .operator(Operator.And).fields("fullTitle^2", "band.description").build()._toQuery());
+            if (!searchTerms.isEmpty()) {
+                boolQuery.must(QueryBuilders.multiMatch().query(searchTerms)
+                    .operator(Operator.And).fields("fullTitle^2", "band.description").build()._toQuery());
+            }
         }
     }
 
     private void addBandTypeQuery(BoolQuery.Builder boolQuery, String bandType) {
         if (bandType != null) {
-            boolQuery.must(QueryBuilders.match().query(bandType).field("band.type").build()._toQuery());
+            if (!bandType.isEmpty()) {
+                boolQuery.must(QueryBuilders.match().query(bandType).field("band.type").build()._toQuery());
+            }
         }
     }
 
