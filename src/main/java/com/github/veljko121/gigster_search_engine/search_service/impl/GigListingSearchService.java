@@ -26,6 +26,7 @@ import co.elastic.clients.elasticsearch._types.Script;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.json.JsonData;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,7 @@ public class GigListingSearchService implements IGigListingSearchService {
     @Override
     public PagedModel<GigListing> searchGigListingsPaged(GigListingSearchRequestDTO requestDTO) {
 
-        var boolQuery = buildBoolQuery(requestDTO.getQuery(), requestDTO.getBandType(), requestDTO.getGenres(), requestDTO.getMaximumPrice(), requestDTO.getDurationHours());
+        var boolQuery = buildBoolQuery(requestDTO.getQuery(), requestDTO.getBandTypes(), requestDTO.getGenres(), requestDTO.getMaximumPrice(), requestDTO.getDurationHours());
         var pageable = PageRequest.of(requestDTO.getPage(), requestDTO.getPageSize());
         var query = buildNativeQueryBuilder(boolQuery, pageable).build();
         var result = elasticsearchTemplate.search(query, GigListing.class);
@@ -53,7 +54,7 @@ public class GigListingSearchService implements IGigListingSearchService {
     @Override
     public PagedModel<Integer> searchGigListingIdsPaged(GigListingSearchRequestDTO requestDTO) {
 
-        var boolQuery = buildBoolQuery(requestDTO.getQuery(), requestDTO.getBandType(), requestDTO.getGenres(), requestDTO.getMaximumPrice(), requestDTO.getDurationHours());
+        var boolQuery = buildBoolQuery(requestDTO.getQuery(), requestDTO.getBandTypes(), requestDTO.getGenres(), requestDTO.getMaximumPrice(), requestDTO.getDurationHours());
         var pageable = PageRequest.of(requestDTO.getPage(), requestDTO.getPageSize());
         var query = buildNativeQueryBuilder(boolQuery, pageable).withSourceFilter(FetchSourceFilter.of(new String[]{"id"}, null)).build();
         var result = elasticsearchTemplate.search(query, GigListing.class);
@@ -61,13 +62,13 @@ public class GigListingSearchService implements IGigListingSearchService {
         var page = new PagedModel<>(new PageImpl<>(gigListings, pageable, result.getTotalHits()));
 
         return page;
-    } 
+    }
 
-    private BoolQuery buildBoolQuery(String query, String bandType, Collection<String> genres, @PositiveOrZero Double maximumPrice, @PositiveOrZero Double durationHours) {
+    private BoolQuery buildBoolQuery(String query, Collection<String> bandTypes, Collection<String> genres, @PositiveOrZero Double maximumPrice, @PositiveOrZero Double durationHours) {
         var boolQuery = QueryBuilders.bool();
 
         addSearchTermQuery(boolQuery, query);
-        addBandTypeQuery(boolQuery, bandType);
+        addBandTypeQuery(boolQuery, bandTypes);
         addGenreQueries(boolQuery, genres);
         addDurationAndPriceQueries(boolQuery, durationHours, maximumPrice);
 
@@ -86,15 +87,16 @@ public class GigListingSearchService implements IGigListingSearchService {
         if (searchTerms != null) {
             if (!searchTerms.isEmpty()) {
                 boolQuery.must(QueryBuilders.multiMatch().query(searchTerms)
-                    .operator(Operator.And).fields("fullTitle^2", "band.description").build()._toQuery());
+                    .operator(Operator.And).type(TextQueryType.CrossFields).fields("fullTitle^2", "band.description").build()._toQuery());
             }
         }
     }
 
-    private void addBandTypeQuery(BoolQuery.Builder boolQuery, String bandType) {
-        if (bandType != null) {
-            if (!bandType.isEmpty()) {
-                boolQuery.must(QueryBuilders.match().query(bandType).field("band.type").build()._toQuery());
+    private void addBandTypeQuery(BoolQuery.Builder boolQuery, Collection<String> bandTypes) {
+        if (bandTypes != null && !bandTypes.isEmpty()) {
+            var bandTypeQuery = String.join(" ", bandTypes);
+            if (!bandTypes.isEmpty()) {
+                boolQuery.must(QueryBuilders.match().query(bandTypeQuery).field("band.type").build()._toQuery());
             }
         }
     }
