@@ -113,7 +113,7 @@ public class GigListingSearchService implements IGigListingSearchService {
 
     private void addDurationAndPriceQueries(BoolQuery.Builder boolQuery, Double durationHours, Double maximumPrice) {
         if (durationHours != null) {
-            var hoursSource = "return doc['minimumDurationHours'].value <= params.get('durationHours') && params.get('durationHours') <= doc['minimumDurationHours'].value + doc['maximumAdditionalHours'].value;";
+            var hoursSource = "return params.get('durationHours') <= doc['minimumDurationHours'].value + doc['maximumAdditionalHours'].value;";
 
             var hoursScript = new Script.Builder()
                 .inline(
