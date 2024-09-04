@@ -89,7 +89,7 @@ public class GigListingController {
             @RequestParam(required = false) Double maximumPrice,
             @RequestParam(required = false) Double durationHours
     ) {
-        GigListingSearchRequestDTO requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandTypes, genres, maximumPrice, durationHours);
+        var requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandTypes, genres, maximumPrice, durationHours);
         return ResponseEntity.ok(gigListingService.searchGigListingIds(requestDTO));
     }
     
