@@ -128,7 +128,7 @@ public class GigListingSearchService implements IGigListingSearchService {
             if (maximumPrice != null) {
                 var priceSource = """
                         double price = doc['startingPrice'].value + (params.get('durationHours') - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
-                        return price <= params.get('maximumPrice');
+                        return price <= params.get('maximumPrice') && params.get('durationHours') >= doc['minimumDurationHours'].value;
                         """;
                 var priceScript = new Script.Builder()
                     .inline(
