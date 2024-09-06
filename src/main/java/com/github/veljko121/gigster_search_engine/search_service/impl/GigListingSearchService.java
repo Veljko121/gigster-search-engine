@@ -20,9 +20,14 @@ import com.github.veljko121.gigster_search_engine.dto.GigListingSearchRequestDTO
 import com.github.veljko121.gigster_search_engine.model.GigListing;
 import com.github.veljko121.gigster_search_engine.search_service.IGigListingSearchService;
 
+import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.InlineScript;
 import co.elastic.clients.elasticsearch._types.Script;
+import co.elastic.clients.elasticsearch._types.ScriptSort;
+import co.elastic.clients.elasticsearch._types.ScriptSortType;
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
@@ -43,7 +48,7 @@ public class GigListingSearchService implements IGigListingSearchService {
 
         var boolQuery = buildBoolQuery(requestDTO.getQuery(), requestDTO.getBandTypes(), requestDTO.getGenres(), requestDTO.getMaximumPrice(), requestDTO.getDurationHours());
         var pageable = PageRequest.of(requestDTO.getPage(), requestDTO.getPageSize());
-        var query = buildNativeQueryBuilder(boolQuery, pageable).build();
+        var query = buildNativeQueryBuilder(boolQuery, pageable, requestDTO).build();
         var result = elasticsearchTemplate.search(query, GigListing.class);
         var gigListings = result.getSearchHits().stream().map(SearchHit::getContent).collect(Collectors.toList());
         var page = new PagedModel<>(new PageImpl<>(gigListings, pageable, result.getTotalHits()));
@@ -56,7 +61,7 @@ public class GigListingSearchService implements IGigListingSearchService {
 
         var boolQuery = buildBoolQuery(requestDTO.getQuery(), requestDTO.getBandTypes(), requestDTO.getGenres(), requestDTO.getMaximumPrice(), requestDTO.getDurationHours());
         var pageable = PageRequest.of(requestDTO.getPage(), requestDTO.getPageSize());
-        var query = buildNativeQueryBuilder(boolQuery, pageable).withSourceFilter(FetchSourceFilter.of(new String[]{"id"}, null)).build();
+        var query = buildNativeQueryBuilder(boolQuery, pageable, requestDTO).withSourceFilter(FetchSourceFilter.of(new String[]{"id"}, null)).build();
         var result = elasticsearchTemplate.search(query, GigListing.class);
         var gigListings = result.getSearchHits().stream().map(SearchHit::getContent).map(GigListing::getId).collect(Collectors.toList());
         var page = new PagedModel<>(new PageImpl<>(gigListings, pageable, result.getTotalHits()));
@@ -75,11 +80,17 @@ public class GigListingSearchService implements IGigListingSearchService {
         return boolQuery.build();
     }
 
-    private NativeQueryBuilder buildNativeQueryBuilder(BoolQuery boolQuery, Pageable pageable) {
+    private NativeQueryBuilder buildNativeQueryBuilder(BoolQuery boolQuery, Pageable pageable, GigListingSearchRequestDTO requestDTO) {
         var queryBuilder = NativeQuery.builder()
             .withQuery(boolQuery._toQuery())
             .withPageable(pageable)
             .withTrackTotalHits(true);
+
+        var sortBy = requestDTO.getSortBy();
+        if (sortBy != null && !sortBy.isEmpty()) {
+            addPriceScriptSort(queryBuilder, requestDTO);
+        }
+
         return queryBuilder;
     }
 
@@ -111,6 +122,54 @@ public class GigListingSearchService implements IGigListingSearchService {
         }
     }
 
+    private void addPriceScriptSort(NativeQueryBuilder queryBuilder, GigListingSearchRequestDTO requestDTO) {
+
+        var sortBy = requestDTO.getSortBy().toLowerCase();
+
+        if (sortBy.equals("name")) {
+    
+            var sortOptions = new SortOptions.Builder().field(new FieldSort.Builder().field("fullTitle.keyword").order(SortOrder.Asc).build()).build();
+    
+            queryBuilder.withSort(sortOptions);
+
+        }
+        else if (sortBy.startsWith("price")) {
+
+            var priceSortScript = """
+                double startingPrice = doc['startingPrice'].value;
+                double additionalPrice = (params.durationHours - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
+                double price = startingPrice;
+                if (additionalPrice > 0) {
+                    price = price + additionalPrice;
+                }
+                return price;
+            """;
+    
+            var script = new Script.Builder()
+                .inline(new InlineScript.Builder()
+                    .source(priceSortScript)
+                    .params(Map.of("durationHours", JsonData.of(requestDTO.getDurationHours())))
+                    .build())
+                .build();
+    
+            var scriptSortBuilder = new ScriptSort.Builder().script(script).type(ScriptSortType.Number);
+
+            if (sortBy.endsWith("lower")) {
+                scriptSortBuilder = scriptSortBuilder.order(SortOrder.Asc);
+            }
+            else if (sortBy.endsWith("highest")) {
+                scriptSortBuilder = scriptSortBuilder.order(SortOrder.Desc);
+            }
+
+            var scriptSort = scriptSortBuilder.build();
+    
+            var sortOptions = new SortOptions.Builder().script(scriptSort).build();
+    
+            queryBuilder.withSort(sortOptions);
+
+        }
+    }
+
     private void addDurationAndPriceQueries(BoolQuery.Builder boolQuery, Double durationHours, Double maximumPrice) {
         if (durationHours != null) {
             var hoursSource = "return params.get('durationHours') <= doc['minimumDurationHours'].value + doc['maximumAdditionalHours'].value;";
@@ -127,8 +186,13 @@ public class GigListingSearchService implements IGigListingSearchService {
 
             if (maximumPrice != null) {
                 var priceSource = """
-                        double price = doc['startingPrice'].value + (params.get('durationHours') - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
-                        return price <= params.get('maximumPrice') && params.get('durationHours') >= doc['minimumDurationHours'].value;
+                        double startingPrice = doc['startingPrice'].value;
+                        double additionalPrice = (params.get('durationHours') - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
+                        double price = startingPrice;
+                        if (additionalPrice > 0) {
+                            price = price + additionalPrice;
+                        }
+                        return params.get('maximumPrice') >= price;
                         """;
                 var priceScript = new Script.Builder()
                     .inline(

@@ -30,4 +30,6 @@ public class GigListingSearchRequestDTO {
     @PositiveOrZero
     private Double durationHours;
 
+    private String sortBy;
+
 }

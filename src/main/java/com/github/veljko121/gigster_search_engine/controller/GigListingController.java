@@ -73,9 +73,10 @@ public class GigListingController {
             @RequestParam(required = false) Collection<String> bandTypes,
             @RequestParam(required = false) Collection<String> genres,
             @RequestParam(required = false) Double maximumPrice,
-            @RequestParam(required = false) Double durationHours
+            @RequestParam(required = false) Double durationHours,
+            @RequestParam(required = false) String sortBy
     ) {
-        GigListingSearchRequestDTO requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandTypes, genres, maximumPrice, durationHours);
+        var requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandTypes, genres, maximumPrice, durationHours, sortBy);
         return ResponseEntity.ok(gigListingService.searchGigListings(requestDTO));
     }
 
@@ -87,9 +88,10 @@ public class GigListingController {
             @RequestParam(required = false) Collection<String> bandTypes,
             @RequestParam(required = false) Collection<String> genres,
             @RequestParam(required = false) Double maximumPrice,
-            @RequestParam(required = false) Double durationHours
+            @RequestParam(required = false) Double durationHours,
+            @RequestParam(required = false) String sortBy
     ) {
-        var requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandTypes, genres, maximumPrice, durationHours);
+        var requestDTO = new GigListingSearchRequestDTO(page, pageSize, query, bandTypes, genres, maximumPrice, durationHours, sortBy);
         return ResponseEntity.ok(gigListingService.searchGigListingIds(requestDTO));
     }
     
