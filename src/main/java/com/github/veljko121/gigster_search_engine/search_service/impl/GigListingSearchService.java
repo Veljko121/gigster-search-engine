@@ -63,8 +63,8 @@ public class GigListingSearchService implements IGigListingSearchService {
         var pageable = PageRequest.of(requestDTO.getPage(), requestDTO.getPageSize());
         var query = buildNativeQueryBuilder(boolQuery, pageable, requestDTO).withSourceFilter(FetchSourceFilter.of(new String[]{"id"}, null)).build();
         var result = elasticsearchTemplate.search(query, GigListing.class);
-        var gigListings = result.getSearchHits().stream().map(SearchHit::getContent).map(GigListing::getId).collect(Collectors.toList());
-        var page = new PagedModel<>(new PageImpl<>(gigListings, pageable, result.getTotalHits()));
+        var gigListingIds = result.getSearchHits().stream().map(SearchHit::getContent).map(GigListing::getId).collect(Collectors.toList());
+        var page = new PagedModel<>(new PageImpl<>(gigListingIds, pageable, result.getTotalHits()));
 
         return page;
     }
@@ -128,7 +128,7 @@ public class GigListingSearchService implements IGigListingSearchService {
 
         if (sortBy.equals("name")) {
     
-            var sortOptions = new SortOptions.Builder().field(new FieldSort.Builder().field("fullTitle.keyword").order(SortOrder.Asc).build()).build();
+            var sortOptions = new SortOptions.Builder().field(new FieldSort.Builder().field("band.name.keyword").order(SortOrder.Asc).build()).build();
     
             queryBuilder.withSort(sortOptions);
 
@@ -138,11 +138,10 @@ public class GigListingSearchService implements IGigListingSearchService {
             var priceSortScript = """
                 double startingPrice = doc['startingPrice'].value;
                 double additionalPrice = (params.durationHours - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
-                double price = startingPrice;
                 if (additionalPrice > 0) {
-                    price = price + additionalPrice;
+                    return startingPrice + additionalPrice;
                 }
-                return price;
+                return startingPrice;
             """;
     
             var script = new Script.Builder()
