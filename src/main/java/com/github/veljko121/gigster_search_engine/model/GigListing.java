@@ -34,4 +34,8 @@ public class GigListing extends Listing {
         return minimumDurationHours + maximumAdditionalHours;
     }
 
+    public Double getMaximumPrice() {
+        return startingPrice + pricePerAdditionalHour * maximumAdditionalHours;
+    }
+
 }
