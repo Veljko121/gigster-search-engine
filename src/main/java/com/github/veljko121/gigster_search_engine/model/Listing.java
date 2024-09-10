@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+import com.github.veljko121.gigster_search_engine.core.enums.ListingType;
 import com.github.veljko121.gigster_search_engine.core.service.model.GenericEntity;
-import com.github.veljko121.gigster_search_engine.enums.ListingType;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

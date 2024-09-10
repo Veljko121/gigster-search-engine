@@ -5,8 +5,8 @@ import java.util.Collection;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+import com.github.veljko121.gigster_search_engine.core.enums.BandType;
 import com.github.veljko121.gigster_search_engine.core.service.model.GenericEntity;
-import com.github.veljko121.gigster_search_engine.enums.BandType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
