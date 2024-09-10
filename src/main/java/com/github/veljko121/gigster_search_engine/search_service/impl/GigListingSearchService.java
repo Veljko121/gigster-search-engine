@@ -86,8 +86,7 @@ public class GigListingSearchService implements IGigListingSearchService {
             .withPageable(pageable)
             .withTrackTotalHits(true);
 
-        var sortBy = requestDTO.getSortBy();
-        if (sortBy != null && !sortBy.isEmpty()) {
+        if (requestDTO.getSortBy() != null && !requestDTO.getSortBy().isEmpty()) {
             addPriceScriptSort(queryBuilder, requestDTO);
         }
 
@@ -95,46 +94,48 @@ public class GigListingSearchService implements IGigListingSearchService {
     }
 
     private void addSearchTermQuery(BoolQuery.Builder boolQuery, String searchTerms) {
-        if (searchTerms != null) {
-            if (!searchTerms.isEmpty()) {
-                boolQuery.must(QueryBuilders.multiMatch().query(searchTerms)
-                    .operator(Operator.And).type(TextQueryType.CrossFields).fields("fullTitle^2", "band.description").build()._toQuery());
-            }
+        if (searchTerms != null && !searchTerms.isEmpty()) {
+            boolQuery.must(QueryBuilders.multiMatch().query(searchTerms)
+                .operator(Operator.And)
+                .type(TextQueryType.CrossFields)
+                .fields("fullTitle^2", "band.description")
+                .build()._toQuery());
         }
     }
 
     private void addBandTypeQuery(BoolQuery.Builder boolQuery, Collection<String> bandTypes) {
         if (bandTypes != null && !bandTypes.isEmpty()) {
             var bandTypeQuery = String.join(" ", bandTypes);
-            if (!bandTypes.isEmpty()) {
-                boolQuery.must(QueryBuilders.match().query(bandTypeQuery).field("band.type").build()._toQuery());
-            }
+            boolQuery.must(QueryBuilders.match().query(bandTypeQuery)
+            .field("band.type")
+            .build()._toQuery());
         }
     }
 
     private void addGenreQueries(BoolQuery.Builder boolQuery, Collection<String> genres) {
         if (genres != null && !genres.isEmpty()) {
             var genreQueries = genres.stream()
-                .map(genre -> QueryBuilders.term().field("band.genres.keyword").value(FieldValue.of(genre)).build()._toQuery())
+                .map(genre -> QueryBuilders.term()
+                    .field("band.genres.keyword")
+                    .value(FieldValue.of(genre))
+                    .build()._toQuery())
                 .collect(Collectors.toList());
-
             boolQuery.must(QueryBuilders.bool().must(genreQueries).build()._toQuery());
         }
     }
 
     private void addPriceScriptSort(NativeQueryBuilder queryBuilder, GigListingSearchRequestDTO requestDTO) {
-
         var sortBy = requestDTO.getSortBy().toLowerCase();
-
         if (sortBy.equals("name")) {
-    
-            var sortOptions = new SortOptions.Builder().field(new FieldSort.Builder().field("band.name.keyword").order(SortOrder.Asc).build()).build();
-    
+            var sortOptions = new SortOptions.Builder()
+                .field(new FieldSort.Builder()
+                    .field("fullTitle.keyword")
+                    .order(SortOrder.Asc)
+                    .build())
+                .build();
             queryBuilder.withSort(sortOptions);
-
         }
         else if (sortBy.startsWith("price")) {
-
             var priceSortScript = """
                 double startingPrice = doc['startingPrice'].value;
                 double additionalPrice = (params.durationHours - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
@@ -143,17 +144,18 @@ public class GigListingSearchService implements IGigListingSearchService {
                 }
                 return startingPrice;
             """;
-    
             var script = new Script.Builder()
                 .inline(new InlineScript.Builder()
                     .source(priceSortScript)
                     .params(Map.of("durationHours", JsonData.of(requestDTO.getDurationHours())))
                     .build())
                 .build();
-    
-            var scriptSortBuilder = new ScriptSort.Builder().script(script).type(ScriptSortType.Number);
 
-            if (sortBy.endsWith("lower")) {
+            var scriptSortBuilder = new ScriptSort.Builder()
+                .script(script)
+                .type(ScriptSortType.Number);
+
+            if (sortBy.endsWith("lowest")) {
                 scriptSortBuilder = scriptSortBuilder.order(SortOrder.Asc);
             }
             else if (sortBy.endsWith("highest")) {
@@ -161,18 +163,14 @@ public class GigListingSearchService implements IGigListingSearchService {
             }
 
             var scriptSort = scriptSortBuilder.build();
-    
             var sortOptions = new SortOptions.Builder().script(scriptSort).build();
-    
             queryBuilder.withSort(sortOptions);
-
         }
     }
 
     private void addDurationAndPriceQueries(BoolQuery.Builder boolQuery, Double durationHours, Double maximumPrice) {
         if (durationHours != null) {
             var hoursSource = "return params.get('durationHours') <= doc['minimumDurationHours'].value + doc['maximumAdditionalHours'].value;";
-
             var hoursScript = new Script.Builder()
                 .inline(
                     new InlineScript.Builder()
@@ -192,7 +190,7 @@ public class GigListingSearchService implements IGigListingSearchService {
                             price = price + additionalPrice;
                         }
                         return params.get('maximumPrice') >= price;
-                        """;
+                """;
                 var priceScript = new Script.Builder()
                     .inline(
                         new InlineScript.Builder()
@@ -205,7 +203,8 @@ public class GigListingSearchService implements IGigListingSearchService {
 
                 boolQuery.must(QueryBuilders.script().script(priceScript).build()._toQuery());
             }
-        } else if (maximumPrice != null) {
+        }
+        else if (maximumPrice != null) {
             var priceSource = "return doc['startingPrice'].value <= params.get('maximumPrice');";
             var priceScript = new Script.Builder()
                 .inline(
