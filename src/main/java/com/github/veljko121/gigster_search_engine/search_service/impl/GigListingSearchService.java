@@ -87,7 +87,7 @@ public class GigListingSearchService implements IGigListingSearchService {
             .withTrackTotalHits(true);
 
         if (requestDTO.getSortBy() != null && !requestDTO.getSortBy().isEmpty()) {
-            addPriceScriptSort(queryBuilder, requestDTO);
+            addSorting(queryBuilder, requestDTO);
         }
 
         return queryBuilder;
@@ -124,7 +124,7 @@ public class GigListingSearchService implements IGigListingSearchService {
         }
     }
 
-    private void addPriceScriptSort(NativeQueryBuilder queryBuilder, GigListingSearchRequestDTO requestDTO) {
+    private void addSorting(NativeQueryBuilder queryBuilder, GigListingSearchRequestDTO requestDTO) {
         var sortBy = requestDTO.getSortBy().toLowerCase();
         if (sortBy.equals("name")) {
             var sortOptions = new SortOptions.Builder()
@@ -138,7 +138,8 @@ public class GigListingSearchService implements IGigListingSearchService {
         else if (sortBy.startsWith("price")) {
             var priceSortScript = """
                 double startingPrice = doc['startingPrice'].value;
-                double additionalPrice = (params.durationHours - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
+                double additionalPrice = (params.durationHours - doc['minimumDurationHours'].value)
+                    * doc['pricePerAdditionalHour'].value;
                 if (additionalPrice > 0) {
                     return startingPrice + additionalPrice;
                 }
@@ -170,7 +171,10 @@ public class GigListingSearchService implements IGigListingSearchService {
 
     private void addDurationAndPriceQueries(BoolQuery.Builder boolQuery, Double durationHours, Double maximumPrice) {
         if (durationHours != null) {
-            var hoursSource = "return params.get('durationHours') <= doc['minimumDurationHours'].value + doc['maximumAdditionalHours'].value;";
+            var hoursSource = """
+                    return params.get('durationHours') <= 
+                        doc['minimumDurationHours'].value + doc['maximumAdditionalHours'].value;
+            """;
             var hoursScript = new Script.Builder()
                 .inline(
                     new InlineScript.Builder()
@@ -184,7 +188,8 @@ public class GigListingSearchService implements IGigListingSearchService {
             if (maximumPrice != null) {
                 var priceSource = """
                         double startingPrice = doc['startingPrice'].value;
-                        double additionalPrice = (params.get('durationHours') - doc['minimumDurationHours'].value) * doc['pricePerAdditionalHour'].value;
+                        double additionalPrice = (params.get('durationHours') - doc['minimumDurationHours'].value)
+                            * doc['pricePerAdditionalHour'].value;
                         double price = startingPrice;
                         if (additionalPrice > 0) {
                             price = price + additionalPrice;
